@@ -1,0 +1,85 @@
+import math
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+
+def cannon_shot():
+    # Okul numarasının son iki hanesi
+    last_two_digits_school_number = 18
+    cannon_position = [0, last_two_digits_school_number]
+    angle = 30
+    gravity = 9.81
+
+    distance = 20000 + 200 * random.randint(-10, 10)
+    width_start = distance
+    width_end = distance + 1000 + 100 * random.randint(-2, 2)
+
+    speed_lower_limit = 330
+    speed_upper_limit = 1800
+    speed = (speed_lower_limit + speed_upper_limit) / 2
+
+    shot_count = 0
+    target_hit = False
+
+    while not target_hit:
+        shot_count += 1
+
+        # Hesaplamalar
+        horizontal_speed = speed * math.cos(math.radians(angle))
+        vertical_speed = speed * math.sin(math.radians(angle))
+
+        # Merminin ulaştığı en üst yukseklik ve ulaşması için geçen zaman 
+        time_to_apex = vertical_speed / gravity
+        apex_height = (vertical_speed * time_to_apex) - (0.5 * gravity * time_to_apex**2)
+
+        # Merminin düşmesi için geçen zaman
+        fall_height = apex_height + cannon_position[0]
+        time_to_fall = math.sqrt(2 * fall_height / gravity)
+
+        # Merminin havada geçirdiği toplam zaman
+        time_to_ground = time_to_apex + time_to_fall
+
+        ####time_to_ground = 2 * vertical_speed / gravity
+        final_x = cannon_position[0] + horizontal_speed * time_to_ground
+
+        # Hedefin önünde veya arkasında kontrol et
+        if width_start <= final_x <= width_end:
+            target_hit = True
+            print(f"{shot_count}. atışta hedef vuruldu! Hız: {speed:.2f} m/s")
+            print(f"Vuruş koordinatı: ({final_x:.2f}, 0)")
+
+            # UÇUŞ GRAFİĞİ
+            # Zaman array'i
+            plot_data_time = np.arange(0, time_to_ground+(time_to_ground / 100000), (time_to_ground / 100000))
+
+            # Grafik için yatayda alınan yol verisi
+            horizontal_distance_over_time = lambda t: horizontal_speed * t
+            plot_data_x = np.array([horizontal_distance_over_time(t) for t in plot_data_time])
+
+            # Grafik için düşeyde alınan yol verisi
+            vertical_distance_over_time = lambda t: cannon_position[1] + ((vertical_speed * t) - (0.5 * gravity * t**2))
+            plot_data_y = np.array([vertical_distance_over_time(t) for t in plot_data_time])
+
+            # Grafik çiz
+            plt.plot(plot_data_x, plot_data_y)
+            plt.xlim([0, max(plot_data_x)*1.1])
+            plt.ylim([0, max(plot_data_y)*1.1])
+            plt.xlabel("Mesafe (m)")
+            plt.ylabel("Yükseklik (m)")
+            plt.title(f"Deneme sayısı: {shot_count}")
+            plt.show()
+        else:
+            if final_x < width_start:
+                print(
+                    f"{shot_count}. atış: Hedefin önünde. Koordinat: ({final_x:.2f}, 0) Hız: ({speed:.2f})")
+                speed_lower_limit = speed
+            else:
+                print(
+                    f"{shot_count}. atış: Hedefin arkasında. Koordinat: ({final_x:.2f}, 0) Hız: ({speed:.2f})")
+                speed_upper_limit = speed
+
+            speed = (speed_lower_limit + speed_upper_limit) / 2
+
+
+if __name__ == "__main__":
+    cannon_shot()
